@@ -58,7 +58,14 @@
 
       <div class="card mb-3">
         <div class="card-header"><h3 class="text-sm" style="font-weight:600;">Detalhamento</h3></div>
-        <div class="card-content" id="question-details"></div>
+        <div class="card-content">
+          <div class="flex gap-2 mb-3" id="detail-filters">
+            <button class="btn btn-sm btn-primary" data-filter="all" onclick="App.filterDetails('all')">Todas</button>
+            <button class="btn btn-sm btn-secondary" data-filter="correct" onclick="App.filterDetails('correct')">Acertos</button>
+            <button class="btn btn-sm btn-secondary" data-filter="wrong" onclick="App.filterDetails('wrong')">Erros</button>
+          </div>
+          <div id="question-details"></div>
+        </div>
       </div>
 
       <div class="flex gap-2 justify-center mt-4 flex-wrap">
@@ -67,6 +74,10 @@
         <a href="index.html" class="btn btn-secondary">Início</a>
       </div>
     </div>
+  </div>
+
+  <div id="modal-overlay" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="modal modal-wide" id="modal-content"></div>
   </div>
 
   <script src="js/storage.js"></script>

@@ -37,10 +37,6 @@ const App = {
     );
     this.allQuestions = results.flat();
 
-    if (typeof QUESTIONS !== 'undefined') {
-      this.allQuestions = [...this.allQuestions, ...Object.values(QUESTIONS).flat()];
-    }
-
     // Deduplicate by id
     const seen = new Set();
     this.allQuestions = this.allQuestions.filter(q => {
@@ -103,7 +99,22 @@ const App = {
     // If it's an area chip, update disciplinas
     if (el.dataset.area) {
       this.updateDisciplinas();
+    } else if (el.dataset.disc) {
+      this.updateSubtopicos();
     }
+  },
+
+  esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  },
+
+  renderImagemHtml(imagem) {
+    if (!imagem) return '';
+    if (/^https?:\/\//i.test(imagem) || /^data:image/i.test(imagem)) {
+      return `<div class="question-image"><img src="${this.esc(imagem)}" alt="Imagem da questão" onerror="this.closest('.question-image').style.display='none';"></div>`;
+    }
+    return `<div class="question-image question-image-placeholder"><span>${this.esc(imagem)}</span></div>`;
   },
 
   // ===== INDEX =====
@@ -221,21 +232,57 @@ const App = {
       const wasSelected = prevSelected.has(d.id) ? ' selected' : '';
       return `<div class="form-chip${wasSelected}" data-disc="${d.id}" onclick="App.toggleChip(this)"><span>${d.name}</span></div>`;
     }).join('');
+
+    this.updateSubtopicos();
   },
 
   getSelectedDisciplinas() {
     return Array.from(document.querySelectorAll('#disciplina-chips .form-chip.selected')).map(c => c.dataset.disc);
   },
 
+  getSelectedSubtopicos() {
+    return Array.from(document.querySelectorAll('#subtopico-chips .form-chip.selected')).map(c => c.dataset.sub);
+  },
+
+  updateSubtopicos() {
+    const container = document.getElementById('subtopico-chips');
+    if (!container) return;
+
+    const areas = this.getSelectedAreas();
+    const disciplinas = this.getSelectedDisciplinas();
+
+    const prevSelected = new Set(
+      Array.from(container.querySelectorAll('.form-chip.selected')).map(c => c.dataset.sub)
+    );
+
+    let pool = this.allQuestions;
+    if (areas.length > 0) pool = pool.filter(q => areas.includes(q.area));
+    if (disciplinas.length > 0) pool = pool.filter(q => disciplinas.includes(q.disciplina));
+
+    const subs = [...new Set(pool.map(q => q.subtopico).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    if (subs.length === 0 || (areas.length === 0 && disciplinas.length === 0)) {
+      container.innerHTML = '<p class="form-hint">Selecione uma área ou disciplina para ver as sub-matérias (ex.: Álgebra → Função de 2º grau).</p>';
+      return;
+    }
+
+    container.innerHTML = subs.map(s => {
+      const wasSelected = prevSelected.has(s) ? ' selected' : '';
+      return `<div class="form-chip${wasSelected}" data-sub="${s}" onclick="App.toggleChip(this)"><span>${this.esc(s)}</span></div>`;
+    }).join('');
+  },
+
   async startPractice() {
     const areas = this.getSelectedAreas();
     const disciplinas = this.getSelectedDisciplinas();
+    const subtopicos = this.getSelectedSubtopicos();
     let num = parseInt(document.getElementById('num-questions').value) || 10;
     num = Math.max(1, Math.min(180, num));
 
     let pool = [...this.allQuestions];
     if (areas.length > 0) pool = pool.filter(q => areas.includes(q.area));
     if (disciplinas.length > 0) pool = pool.filter(q => disciplinas.includes(q.disciplina));
+    if (subtopicos.length > 0) pool = pool.filter(q => subtopicos.includes(q.subtopico));
 
     if (pool.length === 0) {
       this.showToast('Nenhuma questão encontrada com esses filtros.');
@@ -245,7 +292,7 @@ const App = {
     this.currentQuestions = this.smartShuffle(pool, num);
     this.currentAnswers = {};
     this.mode = 'questoes';
-    this.sessionConfig = { areas, disciplinas, num };
+    this.sessionConfig = { areas, disciplinas, subtopicos, num };
     this.recordUsage(this.currentQuestions.map(q => q.id));
 
     document.getElementById('setup-screen').classList.add('hidden');
@@ -312,27 +359,30 @@ const App = {
       const txt = q.texto || q.enunciado || '';
       const pergunta = q.pergunta || '';
       const opcoes = q.opcoes || [];
+      const fonte = q.fonte || (q.ano ? `ENEM ${q.ano}` : 'Questão própria');
       return `
         <div class="question-block" id="q-${i}" data-idx="${i}">
           <div class="question-block-header">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="badge badge-purple">${(AREA_NAMES[q.area]||q.area).split(' e ')[0]}</span>
               <span class="badge badge-info">${DISCIPLINA_NAMES[q.disciplina]||q.disciplina}</span>
+              ${q.subtopico?`<span class="badge badge-warning">${this.esc(q.subtopico)}</span>`:''}
               <span class="badge ${q.dificuldade===1?'badge-success':q.dificuldade===2?'badge-warning':'badge-destructive'}">
                 ${q.dificuldade===1?'Fácil':q.dificuldade===2?'Médio':'Difícil'}</span>
-              ${q.ano?`<span class="badge badge-default">${q.ano}</span>`:''}
+              <span class="badge badge-default fonte-badge" title="Origem da questão">${this.esc(fonte)}</span>
             </div>
             <span class="text-xs text-muted">${i+1}/${this.currentQuestions.length}</span>
           </div>
           <div class="question-block-body">
-            ${ctx?`<div class="question-context">${ctx}</div>`:''}
-            ${txt?`<div class="question-text">${txt}</div>`:''}
-            <div class="question-prompt">${pergunta}</div>
+            ${ctx?`<div class="question-context">${this.esc(ctx)}</div>`:''}
+            ${txt?`<div class="question-text">${this.esc(txt)}</div>`:''}
+            ${this.renderImagemHtml(q.imagem)}
+            ${pergunta?`<div class="question-prompt">${this.esc(pergunta)}</div>`:''}
             <div class="options-list">
               ${opcoes.map((opt, oi) => {
                 const letter = String.fromCharCode(65+oi);
                 return `<div class="option-item" data-q="${q.id}" data-letter="${letter}" onclick="App.selectOption('${q.id}','${letter}',this)">
-                  <span class="option-letter">${letter}</span><span>${opt}</span></div>`;
+                  <span class="option-letter">${letter}</span><span>${this.esc(opt)}</span></div>`;
               }).join('')}
             </div>
           </div>
@@ -430,6 +480,8 @@ const App = {
           <a href="index.html" class="btn btn-primary mt-3">Início</a></div>`;
       return;
     }
+    this._result = result;
+    this.detailFilter = 'all';
     this.renderResult(result);
   },
 
@@ -462,31 +514,119 @@ const App = {
     document.getElementById('gabarito-grid').innerHTML = questions.map((q, i) => {
       const ua = answers[q.id];
       const ok = ua === q.gabarito;
-      return `<div class="gabarito-pip${ua?(ok?' correct':' incorrect'):''}" title="Q${i+1}: ${ua||'-'} → ${q.gabarito}">${i+1}</div>`;
+      return `<div class="gabarito-pip${ua?(ok?' correct':' incorrect'):''}" title="Q${i+1}: ${ua||'-'} → ${q.gabarito}" onclick="App.showQuestionDetail(${i})" style="cursor:pointer;">${i+1}</div>`;
     }).join('');
 
-    document.getElementById('question-details').innerHTML = questions.map((q, i) => {
+    this.renderDetails();
+  },
+
+  filterDetails(filter) {
+    this.detailFilter = filter;
+    const btns = document.querySelectorAll('#detail-filters .btn');
+    btns.forEach(b => b.classList.toggle('btn-primary', b.dataset.filter === filter));
+    btns.forEach(b => b.classList.toggle('btn-secondary', b.dataset.filter !== filter));
+    this.renderDetails();
+  },
+
+  renderDetails() {
+    const r = this._result;
+    if (!r) return;
+    const { questions, answers } = r;
+    const filter = this.detailFilter;
+    const el = document.getElementById('question-details');
+    if (!el) return;
+
+    const items = questions.map((q, i) => {
       const ua = answers[q.id];
       const ok = ua === q.gabarito;
-      const txt = (q.texto || q.enunciado || '').substring(0, 200);
+      if (filter === 'correct' && !ok) return null;
+      if (filter === 'wrong' && (ok || !ua)) return null;
+      const txt = (q.texto || q.enunciado || '').substring(0, 160);
+      const fonte = q.fonte || (q.ano ? `ENEM ${q.ano}` : 'Questão própria');
       return `<div class="card mb-2" style="border-left:3px solid ${ok?'var(--success)':'var(--destructive)'};">
         <div class="card-content" style="padding:1rem 1.25rem;">
           <div class="flex justify-between items-center mb-2 flex-wrap gap-1">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <span class="text-xs text-muted">Q${i+1}</span>
               <span class="badge badge-info">${DISCIPLINA_NAMES[q.disciplina]||q.disciplina}</span>
-              ${q.ano?`<span class="badge badge-default">${q.ano}</span>`:''}
+              ${q.subtopico?`<span class="badge badge-warning">${this.esc(q.subtopico)}</span>`:''}
+              <span class="badge badge-default">${this.esc(fonte)}</span>
             </div>
             <span class="badge ${ok?'badge-success':'badge-destructive'}">${ok?'✓ Acertou':'✗ Errou'}</span>
           </div>
-          <p class="text-sm text-muted mb-2" style="line-height:1.6;">${txt}${txt.length>=200?'...':''}</p>
-          <div class="text-xs">
-            <span class="text-muted">Sua:</span>
-            <span style="color:${ok?'var(--success)':'var(--destructive)'};font-weight:600;"> ${ua||'—'}</span>
-            ${!ok?`<span class="text-muted" style="margin-left:0.5rem;">Gab:</span> <span style="color:var(--success);font-weight:600;">${q.gabarito}</span>`:''}
+          <p class="text-sm text-muted mb-2" style="line-height:1.6;">${this.esc(txt)}${txt.length>=160?'...':''}</p>
+          <div class="text-xs flex items-center justify-between flex-wrap gap-1">
+            <div>
+              <span class="text-muted">Sua:</span>
+              <span style="color:${ok?'var(--success)':'var(--destructive)'};font-weight:600;"> ${ua||'—'}</span>
+              ${!ok?`<span class="text-muted" style="margin-left:0.5rem;">Gab:</span> <span style="color:var(--success);font-weight:600;">${q.gabarito}</span>`:''}
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="App.showQuestionDetail(${i})">Ver questão completa</button>
           </div>
         </div></div>`;
+    }).filter(Boolean);
+
+    el.innerHTML = items.length > 0
+      ? items.join('')
+      : '<p class="text-muted text-sm text-center" style="padding:2rem;">Nenhuma questão com esse filtro.</p>';
+  },
+
+  showQuestionDetail(i) {
+    const r = this._result;
+    if (!r || !r.questions[i]) return;
+    const q = r.questions[i];
+    const ua = r.answers[q.id];
+    const ok = ua === q.gabarito;
+    const fonte = q.fonte || (q.ano ? `ENEM ${q.ano}` : 'Questão própria');
+    const ctx = q.contexto || '';
+    const txt = q.texto || q.enunciado || '';
+    const pergunta = q.pergunta || '';
+
+    const opts = (q.opcoes || []).map((opt, oi) => {
+      const letter = String.fromCharCode(65+oi);
+      const isGab = letter === q.gabarito;
+      const isUser = ua === letter && !isGab;
+      let cls = 'detail-option';
+      if (isGab) cls += ' correct-option';
+      else if (isUser) cls += ' user-wrong';
+      const tags = [];
+      if (isGab) tags.push('Gabarito');
+      if (ua === letter) tags.push('Sua resposta');
+      return `<div class="${cls}">
+        <span class="option-letter">${letter}</span>
+        <div style="flex:1;">
+          <div>${this.esc(opt)}</div>
+          ${tags.length?`<div class="text-xs" style="margin-top:0.25rem;font-weight:600;color:${isGab?'var(--success)':'var(--destructive)'};">${tags.join(' · ')}</div>`:''}
+        </div>
+      </div>`;
     }).join('');
+
+    const modal = document.getElementById('modal-overlay');
+    const content = document.getElementById('modal-content');
+    content.innerHTML = `
+      <div class="flex items-center justify-between mb-2 flex-wrap gap-1">
+        <h2 style="font-size:1.1rem;font-weight:700;margin:0;">Questão ${i+1}</h2>
+        <span class="badge ${ok?'badge-success':'badge-destructive'}">${ok?'✓ Acertou':'✗ Errou'}</span>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap mb-3">
+        <span class="badge badge-info">${DISCIPLINA_NAMES[q.disciplina]||q.disciplina}</span>
+        ${q.subtopico?`<span class="badge badge-warning">${this.esc(q.subtopico)}</span>`:''}
+        <span class="badge badge-default">${this.esc(fonte)}</span>
+      </div>
+      ${ctx?`<div class="question-context">${this.esc(ctx)}</div>`:''}
+      ${txt?`<div class="question-text">${this.esc(txt)}</div>`:''}
+      ${this.renderImagemHtml(q.imagem)}
+      ${pergunta?`<div class="question-prompt">${this.esc(pergunta)}</div>`:''}
+      <div class="detail-options">${opts}</div>
+      <div class="separator" style="margin:1rem 0;"></div>
+      <div class="text-xs text-muted">
+        Sua resposta: <strong style="color:${ok?'var(--success)':'var(--destructive)'};">${ua||'—'}</strong>
+        · Gabarito: <strong style="color:var(--success);">${q.gabarito}</strong>
+      </div>
+      <div class="modal-actions mt-3">
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('modal-overlay').classList.remove('active')">Fechar</button>
+      </div>`;
+    modal.classList.add('active');
   },
 
   showToast(msg) {
