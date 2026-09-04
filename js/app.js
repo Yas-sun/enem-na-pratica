@@ -10,7 +10,7 @@ const App = {
     this.loadTheme();
     this.loadFrequency();
     const page = this.getPage();
-    if (page === 'index') this.initIndex();
+    if (page === 'index') await this.initIndex();
     else if (page === 'questoes') await this.initQuestoes();
     else if (page === 'simulado') await this.initSimulado();
     else if (page === 'resultado') this.initResultado();
@@ -111,16 +111,36 @@ const App = {
 
   renderImagemHtml(imagem) {
     if (!imagem) return '';
-    if (/^https?:\/\//i.test(imagem) || /^data:image/i.test(imagem)) {
-      return `<div class="question-image"><img src="${this.esc(imagem)}" alt="Imagem da questão" onerror="this.closest('.question-image').style.display='none';"></div>`;
-    }
-    return `<div class="question-image question-image-placeholder"><span>${this.esc(imagem)}</span></div>`;
+    const list = Array.isArray(imagem) ? imagem : [imagem];
+    return list.map(img => {
+      if (/^https?:\/\//i.test(img) || /^data:image/i.test(img)) {
+        return `<div class="question-image"><img src="${this.esc(img)}" alt="Imagem da questão" onerror="this.closest('.question-image').style.display='none';"></div>`;
+      }
+      if (/^\[Imagem:/i.test(img)) {
+        return `<div class="question-image question-image-placeholder"><span>${this.esc(img)}</span></div>`;
+      }
+      return `<div class="question-image"><img src="${this.esc(img)}" alt="Imagem da questão" onerror="this.closest('.question-image').style.display='none';"></div>`;
+    }).join('');
   },
 
   // ===== INDEX =====
-  initIndex() {
+  async initIndex() {
+    await this.loadAllQuestions();
     this.renderHistory();
     this.renderIndexStats();
+    this.renderBankStats();
+  },
+
+  renderBankStats() {
+    const qs = this.allQuestions;
+    const editions = new Set(qs.map(q => q.ano)).size;
+    const areas = new Set(qs.map(q => q.area)).size;
+    const images = qs.filter(q => q.imagem).length;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('stat-editions', editions);
+    set('stat-areas', areas);
+    set('stat-questions', qs.length);
+    set('stat-images', images);
   },
 
   renderIndexStats() {
