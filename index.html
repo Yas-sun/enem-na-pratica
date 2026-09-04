@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ENEM Simulado</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand">
+      <span class="logo">E</span>
+      <span>ENEM Simulado</span>
+    </a>
+    <div class="navbar-nav">
+      <a href="index.html" class="nav-link active">Início</a>
+      <a href="questoes.html" class="nav-link">Questões</a>
+      <a href="simulado.html" class="nav-link">Simulado</a>
+      <button id="theme-toggle" class="btn btn-ghost btn-icon btn-sm" onclick="App.toggleTheme()">☀</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <section class="hero">
+      <h1>Prepare-se para o ENEM</h1>
+      <p>Pratique com questões reais de 2009 a 2025, faça simulados completos e acompanhe seu desempenho com correção TRI.</p>
+      <div class="flex gap-2" style="justify-content:center;">
+        <a href="questoes.html" class="btn btn-primary btn-lg">Praticar Questões</a>
+        <a href="simulado.html" class="btn btn-outline btn-lg">Simulado</a>
+      </div>
+    </section>
+
+    <div id="index-stats" class="score-grid hidden" style="max-width:700px;margin:0 auto 2rem;"></div>
+
+    <section class="section">
+      <h2 class="section-title">Estrutura do ENEM</h2>
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-header"><h3 style="font-size:0.9rem;font-weight:600;">1º Dia</h3></div>
+          <div class="card-content">
+            <p class="text-sm text-muted">Linguagens e Códigos (45 questões) + Ciências Humanas (45 questões) + Redação</p>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <span class="badge badge-purple">Português</span>
+              <span class="badge badge-purple">Inglês/Espanhol</span>
+              <span class="badge badge-purple">Literatura</span>
+              <span class="badge badge-info">História</span>
+              <span class="badge badge-info">Geografia</span>
+              <span class="badge badge-info">Sociologia</span>
+              <span class="badge badge-info">Filosofia</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3 style="font-size:0.9rem;font-weight:600;">2º Dia</h3></div>
+          <div class="card-content">
+            <p class="text-sm text-muted">Ciências da Natureza (45 questões) + Matemática (45 questões)</p>
+            <div class="mt-2 flex flex-wrap gap-1">
+              <span class="badge badge-success">Física</span>
+              <span class="badge badge-success">Química</span>
+              <span class="badge badge-success">Biologia</span>
+              <span class="badge badge-warning">Álgebra</span>
+              <span class="badge badge-warning">Geometria</span>
+              <span class="badge badge-warning">Estatística</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Correção TRI</h2>
+      <div class="card">
+        <div class="card-content">
+          <p class="text-sm" style="line-height:1.7;margin-bottom:1rem;">
+            A <strong>Teoria de Resposta ao Item (TRI)</strong> avalia o padrão de respostas, não apenas a quantidade de acertos. Três parâmetros definem cada questão:
+          </p>
+          <div class="grid grid-3">
+            <div>
+              <h4 class="text-sm" style="font-weight:600;margin-bottom:0.25rem;">Dificuldade</h4>
+              <p class="text-xs text-muted">Se a questão é fácil, média ou difícil.</p>
+            </div>
+            <div>
+              <h4 class="text-sm" style="font-weight:600;margin-bottom:0.25rem;">Discriminação</h4>
+              <p class="text-xs text-muted">Capacidade de diferenciar quem sabe de quem não sabe.</p>
+            </div>
+            <div>
+              <h4 class="text-sm" style="font-weight:600;margin-bottom:0.25rem;">Acerto ao Acaso</h4>
+              <p class="text-xs text-muted">Probabilidade de acertar no chute.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Banco de Questões</h2>
+      <div class="card">
+        <div class="card-content">
+          <div class="grid grid-4" style="text-align:center;">
+            <div><div class="score-value" style="font-size:1.5rem;color:var(--purple);">17</div><div class="score-label">Edições (2009-2025)</div></div>
+            <div><div class="score-value" style="font-size:1.5rem;color:var(--info);">4</div><div class="score-label">Áreas do Conhecimento</div></div>
+            <div><div class="score-value" style="font-size:1.5rem;color:var(--success);">180</div><div class="score-label">Questões por Edição</div></div>
+            <div><div class="score-value" style="font-size:1.5rem;color:var(--warning);">5</div><div class="score-label">Alternativas por Questão</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Histórico Recente</h2>
+      <div id="history-list"></div>
+    </section>
+
+    <div id="modal-overlay" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+      <div class="modal" id="modal-content"></div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/tri.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
