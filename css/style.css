@@ -215,6 +215,14 @@ body {
 .form-chip:hover { border-color: var(--ring); }
 .form-chip.selected { background: var(--secondary); border-color: var(--ring); color: var(--foreground); }
 
+.chip-count {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  font-weight: 500;
+  margin-left: 0.15rem;
+}
+
 .form-chip input { display: none; }
 
 .form-row {

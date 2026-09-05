@@ -253,9 +253,16 @@ const App = {
       );
     }
 
+    // count questions per disciplina (within selected areas)
+    let basePool = this.allQuestions;
+    if (areas.length > 0) basePool = basePool.filter(q => areas.includes(q.area));
+    const discCounts = {};
+    basePool.forEach(q => { discCounts[q.disciplina] = (discCounts[q.disciplina] || 0) + 1; });
+
     container.innerHTML = discList.map(d => {
       const wasSelected = prevSelected.has(d.id) ? ' selected' : '';
-      return `<div class="form-chip${wasSelected}" data-disc="${d.id}" onclick="App.toggleChip(this)"><span>${d.name}</span></div>`;
+      const c = discCounts[d.id] || 0;
+      return `<div class="form-chip${wasSelected}" data-disc="${d.id}" onclick="App.toggleChip(this)"><span>${d.name} <em class="chip-count">(${c})</em></span></div>`;
     }).join('');
 
     this.updateSubtopicos();
@@ -291,9 +298,13 @@ const App = {
       return;
     }
 
+    const subCounts = {};
+    pool.forEach(q => { if (q.subtopico) subCounts[q.subtopico] = (subCounts[q.subtopico] || 0) + 1; });
+
     container.innerHTML = subs.map(s => {
       const wasSelected = prevSelected.has(s) ? ' selected' : '';
-      return `<div class="form-chip${wasSelected}" data-sub="${s}" onclick="App.toggleChip(this)"><span>${this.esc(s)}</span></div>`;
+      const c = subCounts[s] || 0;
+      return `<div class="form-chip${wasSelected}" data-sub="${s}" onclick="App.toggleChip(this)"><span>${this.esc(s)} <em class="chip-count">(${c})</em></span></div>`;
     }).join('');
   },
 
