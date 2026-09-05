@@ -403,6 +403,7 @@ const App = {
             ${ctx?`<div class="question-context">${this.esc(ctx)}</div>`:''}
             ${txt?`<div class="question-text">${this.esc(txt)}</div>`:''}
             ${this.renderImagemHtml(q.imagem)}
+            ${q.referencia?`<div class="question-reference">${this.esc(q.referencia)}</div>`:''}
             ${pergunta?`<div class="question-prompt">${this.esc(pergunta)}</div>`:''}
             <div class="options-list">
               ${opcoes.map((opt, oi) => {
@@ -642,6 +643,7 @@ const App = {
       ${ctx?`<div class="question-context">${this.esc(ctx)}</div>`:''}
       ${txt?`<div class="question-text">${this.esc(txt)}</div>`:''}
       ${this.renderImagemHtml(q.imagem)}
+      ${q.referencia?`<div class="question-reference">${this.esc(q.referencia)}</div>`:''}
       ${pergunta?`<div class="question-prompt">${this.esc(pergunta)}</div>`:''}
       <div class="detail-options">${opts}</div>
       <div class="separator" style="margin:1rem 0;"></div>
