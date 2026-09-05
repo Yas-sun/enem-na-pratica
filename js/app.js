@@ -27,6 +27,11 @@ const App = {
   // ===== JSON LOADER =====
   async loadAllQuestions() {
     if (this.allQuestions.length > 0) return this.allQuestions;
+    // Modo offline: banco embutido em js/dados.js (funciona sem servidor, via file://)
+    if (typeof window !== 'undefined' && window.BANCO_QUESTIONS) {
+      this.allQuestions = window.BANCO_QUESTIONS;
+      return this.allQuestions;
+    }
     const years = [];
     for (let y = 2009; y <= 2025; y++) years.push(y);
 
