@@ -336,12 +336,13 @@ const App = {
 
   async startSimulado() {
     const type = document.getElementById('simulado-type').value;
+    const cap = { completo: 180, dia1: 90, dia2: 90 }[type] || 180;
     let pool = [];
     if (type === 'dia1') pool = this.allQuestions.filter(q => q.area === 'linguagens' || q.area === 'humanas');
     else if (type === 'dia2') pool = this.allQuestions.filter(q => q.area === 'natureza' || q.area === 'matematica');
     else pool = [...this.allQuestions];
 
-    this.currentQuestions = this.smartShuffle(pool, pool.length);
+    this.currentQuestions = this.smartShuffle(pool, Math.min(cap, pool.length));
     this.currentAnswers = {};
     this.mode = 'simulado';
     this.sessionConfig = { type };
