@@ -650,7 +650,7 @@ body.light .floating-nav { box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
 }
 
 /* ===== REPORT MODAL ===== */
-.modal-overlay {
+.report-overlay {
   position: fixed; inset: 0; z-index: 10000;
   background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;

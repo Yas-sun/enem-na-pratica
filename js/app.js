@@ -784,7 +784,7 @@ const App = {
 
     const modal = document.createElement('div');
     modal.id = 'report-modal';
-    modal.className = 'modal-overlay';
+    modal.className = 'report-overlay';
     modal.innerHTML = `
       <div class="modal-card">
         <div class="modal-header">
