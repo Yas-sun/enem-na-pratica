@@ -12,7 +12,6 @@ node_modules/
 enem-image-extractor/output*/
 enem-image-extractor/debug*.txt
 enem-image-extractor/mismatch.txt
-enem-na-pratica/pdfs/
 
 # Outros projetos no repo (não commitar)
 steamcmd/
