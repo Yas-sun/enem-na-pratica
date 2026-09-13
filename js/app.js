@@ -200,6 +200,94 @@ const App = {
     this.renderBankStats();
   },
 
+  searchQuestions() {
+    const input = document.getElementById('search-input');
+    const resultsEl = document.getElementById('search-results');
+    if (!input || !resultsEl) return;
+
+    const query = input.value.trim().toLowerCase();
+    if (query.length < 2) {
+      resultsEl.innerHTML = '';
+      return;
+    }
+
+    const results = this.allQuestions.filter(q => {
+      const num = String(q.numero || '');
+      const ano = String(q.ano || '');
+      const texto = (q.texto || q.enunciado || '').toLowerCase();
+      const disciplina = (q.disciplina || '').toLowerCase();
+      const subtopico = (q.subtopico || '').toLowerCase();
+      return num.includes(query) || ano.includes(query) || texto.includes(query) || disciplina.includes(query) || subtopico.includes(query);
+    }).slice(0, 20);
+
+    if (results.length === 0) {
+      resultsEl.innerHTML = '<p class="text-muted text-sm">Nenhum resultado encontrado.</p>';
+      return;
+    }
+
+    resultsEl.innerHTML = results.map(q => {
+      const txt = (q.texto || q.enunciado || '').substring(0, 100);
+      const fonte = q.fonte || `ENEM ${q.ano}`;
+      return `<div class="card mb-2" style="cursor:pointer;border-left:3px solid var(--info);" onclick="App.showSearchDetail('${q.id}')">
+        <div class="card-content" style="padding:0.75rem 1rem;">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="badge badge-purple">${(AREA_NAMES[q.area]||q.area).split(' e ')[0]}</span>
+            <span class="badge badge-info">${DISCIPLINA_NAMES[q.disciplina]||q.disciplina}</span>
+            <span class="text-xs text-muted">Q${q.numero} · ${fonte}</span>
+          </div>
+          <p class="text-sm text-muted" style="margin:0;">${this.esc(txt)}${txt.length>=100?'...':''}</p>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  showSearchDetail(questionId) {
+    const q = this.allQuestions.find(x => x.id === questionId);
+    if (!q) return;
+
+    const ctx = q.contexto || '';
+    const txt = q.texto || q.enunciado || '';
+    const pergunta = q.pergunta || '';
+    const fonte = q.fonte || `ENEM ${q.ano}`;
+
+    const opts = (q.opcoes || []).map((opt, oi) => {
+      const letter = String.fromCharCode(65+oi);
+      const isImage = opt && (opt.includes('/') || opt.endsWith('.png') || opt.endsWith('.jpg'));
+      const optContent = isImage
+        ? `<img src="${this.esc(opt)}" alt="Opção ${letter}" style="max-width:100%;height:auto;" onerror="this.style.display='none'">`
+        : this.esc(opt);
+      return `<div class="detail-option">
+        <span class="option-letter">${letter}</span>
+        <div style="flex:1;">${optContent}</div>
+      </div>`;
+    }).join('');
+
+    const modal = document.getElementById('modal-overlay');
+    const content = document.getElementById('modal-content');
+    content.innerHTML = `
+      <div class="flex items-center gap-2 flex-wrap mb-2">
+        <span class="badge badge-purple">${(AREA_NAMES[q.area]||q.area).split(' e ')[0]}</span>
+        <span class="badge badge-info">${DISCIPLINA_NAMES[q.disciplina]||q.disciplina}</span>
+        ${q.subtopico?`<span class="badge badge-warning">${this.esc(q.subtopico)}</span>`:''}
+        <span class="badge badge-default">ENEM ${q.ano} - Q${q.numero||'?'}</span>
+      </div>
+      <h2 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">Questão ${q.numero}</h2>
+      ${ctx?`<div class="question-context">${this.esc(ctx)}</div>`:''}
+      ${txt?`<div class="question-text">${this.renderTextWithImage(txt, q.imagem)}</div>`:''}
+      ${q.referencia?`<div class="question-reference">${this.esc(q.referencia)}</div>`:''}
+      ${pergunta?`<div class="question-prompt">${this.esc(pergunta)}</div>`:''}
+      <div class="detail-options">${opts}</div>
+      <div class="separator" style="margin:1rem 0;"></div>
+      <div class="text-xs text-muted">
+        Gabarito: <strong style="color:var(--success);">${q.gabarito || 'AUSENTE'}</strong>
+        · Fonte: ${fonte}
+      </div>
+      <div class="modal-actions mt-3">
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('modal-overlay').classList.remove('active')">Fechar</button>
+      </div>`;
+    modal.classList.add('active');
+  },
+
   renderBankStats() {
     const qs = this.allQuestions;
     const editions = new Set(qs.map(q => q.ano)).size;
