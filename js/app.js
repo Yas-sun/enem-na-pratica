@@ -487,6 +487,7 @@ const App = {
               <span class="badge ${q.dificuldade===1?'badge-success':q.dificuldade===2?'badge-warning':'badge-destructive'}">
                 ${q.dificuldade===1?'Fácil':q.dificuldade===2?'Médio':'Difícil'}</span>
               <span class="badge badge-default fonte-badge" title="Origem da questão">${this.esc(q.fonte||'ENEM')}</span>
+              <button class="report-btn" onclick="App.reportQuestion('${q.id}')" title="Reportar problema">Reportar</button>
             </div>
             <span class="text-xs text-muted">${i+1}/${this.currentQuestions.length}</span>
           </div>
@@ -764,6 +765,41 @@ const App = {
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3000);
+  },
+
+  // ===== REPORT SYSTEM =====
+  reportQuestion(questionId) {
+    const q = this.allQuestions.find(x => x.id === questionId);
+    if (!q) return;
+
+    const issues = [];
+    if (!q.gabarito) issues.push('Gabarito ausente');
+    if (!q.imagem && q.texto && q.texto.includes('[Imagem')) issues.push('Imagem necessária mas ausente');
+    if (!q.opcoes || q.opcoes.length < 5) issues.push('Opções incompletas');
+    if (q.subtopico && ['Física Geral', 'Química Geral', 'Biologia Geral', 'História Geral', 'Sociologia Geral'].includes(q.subtopico)) issues.push('Subtópico genérico (precisa de revisão)');
+
+    const issueTitle = encodeURIComponent(`[Questão] ${q.id} - ${issues[0] || 'Problema'}`);
+    const issueBody = encodeURIComponent(
+`## Questão: ${q.id}
+- **Ano:** ${q.ano}
+- **Disciplina:** ${q.disciplina}
+- **Subtópico:** ${q.subtopico || 'N/A'}
+- **Área:** ${q.area}
+
+### Problemas encontrados:
+${issues.map(i => `- ${i}`).join('\n') || '- Outro (descreva abaixo)'}
+
+### Texto da questão:
+> ${(q.texto || '').substring(0, 500)}${(q.texto || '').length > 500 ? '...' : ''}
+
+### Gabarito: ${q.gabarito || 'AUSENTE'}
+
+---
+*Reportado automaticamente pelo sistema ENEM na Prática*`
+    );
+
+    const url = `https://github.com/Yas-sun/enem-na-pratica/issues/new?title=${issueTitle}&body=${issueBody}&labels=questao`;
+    window.open(url, '_blank');
   }
 };
 
