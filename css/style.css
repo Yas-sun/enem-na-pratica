@@ -648,3 +648,48 @@ body.light .floating-nav { box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
   color: var(--destructive-foreground);
   border-color: var(--destructive);
 }
+
+/* ===== REPORT MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s;
+}
+.modal-card {
+  background: var(--background); border: 1px solid var(--border);
+  border-radius: 12px; width: 90%; max-width: 380px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: slideUp 0.2s;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+}
+.modal-header h3 { margin: 0; font-size: 1rem; }
+.modal-close {
+  background: none; border: none; font-size: 1.5rem;
+  cursor: pointer; color: var(--muted-foreground); line-height: 1;
+}
+.modal-close:hover { color: var(--foreground); }
+.modal-body { padding: 0 1.25rem 1.25rem; }
+.modal-question-id {
+  font-size: 0.8rem; color: var(--muted-foreground);
+  margin: 0 0 0.75rem;
+}
+.modal-label {
+  font-size: 0.85rem; font-weight: 500; margin: 0 0 0.625rem;
+}
+.modal-options { display: flex; flex-direction: column; gap: 0.5rem; }
+.modal-option {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--background);
+  cursor: pointer; transition: all 0.15s; text-align: left;
+  font-size: 0.85rem;
+}
+.modal-option:hover {
+  border-color: var(--ring); background: var(--accent);
+}
+.modal-option-icon { font-size: 1.25rem; }
+.modal-option-text { flex: 1; }

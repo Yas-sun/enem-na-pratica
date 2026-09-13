@@ -771,34 +771,93 @@ const App = {
   reportQuestion(questionId) {
     const q = this.allQuestions.find(x => x.id === questionId);
     if (!q) return;
+    this._reportQueue = q;
+    this.showReportModal();
+  },
 
-    const issues = [];
-    if (!q.gabarito) issues.push('Gabarito ausente');
-    if (!q.imagem && q.texto && q.texto.includes('[Imagem')) issues.push('Imagem necessária mas ausente');
-    if (!q.opcoes || q.opcoes.length < 5) issues.push('Opções incompletas');
-    if (q.subtopico && ['Física Geral', 'Química Geral', 'Biologia Geral', 'História Geral', 'Sociologia Geral'].includes(q.subtopico)) issues.push('Subtópico genérico (precisa de revisão)');
+  showReportModal() {
+    const q = this._reportQueue;
+    if (!q) return;
 
-    const issueTitle = encodeURIComponent(`[Questão] ${q.id} - ${issues[0] || 'Problema'}`);
+    const existing = document.getElementById('report-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'report-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Reportar Questão</h3>
+          <button class="modal-close" onclick="App.closeReportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-question-id">${q.id} — ${q.ano} — ${q.disciplina}</p>
+          <p class="modal-label">Qual o problema?</p>
+          <div class="modal-options">
+            <button class="modal-option" onclick="App.submitReport('sem_respostas')">
+              <span class="modal-option-icon">📝</span>
+              <span class="modal-option-text">Questão sem gabarito</span>
+            </button>
+            <button class="modal-option" onclick="App.submitReport('ilegivel')">
+              <span class="modal-option-icon">👁️</span>
+              <span class="modal-option-text">Enunciado/respostas ilegíveis</span>
+            </button>
+            <button class="modal-option" onclick="App.submitReport('sem_imagem')">
+              <span class="modal-option-icon">🖼️</span>
+              <span class="modal-option-text">Questão sem imagem</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) this.closeReportModal(); });
+  },
+
+  closeReportModal() {
+    const m = document.getElementById('report-modal');
+    if (m) m.remove();
+    this._reportQueue = null;
+  },
+
+  submitReport(reason) {
+    const q = this._reportQueue;
+    if (!q) return;
+
+    const labels = {
+      'sem_respostas': 'sem-gabarito',
+      'ilegivel': 'ilegivel',
+      'sem_imagem': 'sem-imagem'
+    };
+    const titles = {
+      'sem_respostas': 'Questão sem gabarito',
+      'ilegivel': 'Enunciado ou respostas ilegíveis',
+      'sem_imagem': 'Questão sem imagem'
+    };
+
+    const issueTitle = encodeURIComponent(`[${titles[reason]}] ${q.id}`);
     const issueBody = encodeURIComponent(
-`## Questão: ${q.id}
-- **Ano:** ${q.ano}
-- **Disciplina:** ${q.disciplina}
-- **Subtópico:** ${q.subtopico || 'N/A'}
-- **Área:** ${q.area}
+`## ${titles[reason]}
 
-### Problemas encontrados:
-${issues.map(i => `- ${i}`).join('\n') || '- Outro (descreva abaixo)'}
+| Campo | Valor |
+|-------|-------|
+| ID | ${q.id} |
+| Ano | ${q.ano} |
+| Disciplina | ${q.disciplina} |
+| Subtópico | ${q.subtopico || 'N/A'} |
+| Área | ${q.area} |
+| Gabarito | ${q.gabarito || 'AUSENTE'} |
 
 ### Texto da questão:
 > ${(q.texto || '').substring(0, 500)}${(q.texto || '').length > 500 ? '...' : ''}
 
-### Gabarito: ${q.gabarito || 'AUSENTE'}
-
 ---
-*Reportado automaticamente pelo sistema ENEM na Prática*`
+*Reportado via ENEM na Prática*`
     );
 
-    const url = `https://github.com/Yas-sun/enem-na-pratica/issues/new?title=${issueTitle}&body=${issueBody}&labels=questao`;
+    const url = `https://github.com/Yas-sun/enem-na-pratica/issues/new?title=${issueTitle}&body=${issueBody}&labels=${labels[reason] || 'questao'}`;
+    this.closeReportModal();
     window.open(url, '_blank');
   }
 };
