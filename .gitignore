@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+*.pyd
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# Outputs grandes
+enem-image-extractor/output*/
+enem-image-extractor/debug*.txt
+enem-image-extractor/mismatch.txt
+enem-na-pratica/pdfs/
+
+# Outros projetos no repo (não commitar)
+steamcmd/
+ddtank-app/
+ddtank-app2/
+ddtank-calculadora/
+ddtank_calc/
+stoatcord/
+CRT/
+SimpleKits/
+SimpleKits-GitHub/
+KitsUI-Unity/
+KitsUI-Workshop/
+Servers/
+autoColor/
+autoclicker/
+curriculo/
+sacole/
+scripts/
+otimizacao/
+relatorio-mensal-adpaf/
+flutter-hello-world-tutorial/
+migrador-canais/
+ENEM_PDF_PARSER/
+CaroliniCurriculo/
+FaculdadeVounei/
+UKits-decompilado/
+UnturnedImages/
+UnturnedItemIcons/
+UnturnedItemIconsRepo/
+documentacaoUnturned/
+u3ds-docs/
+unturned-csharp-guide/
+
+# Outros
+*.log
+.DS_Store
+Thumbs.db
